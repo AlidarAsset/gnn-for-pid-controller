@@ -1,0 +1,64 @@
+experiment:
+  N: 5
+  dt: 0.01
+  T: 20.0
+  integrator: "rk4"
+  seed: 42
+
+graph:
+  type: "line"
+  edges: [[0,1],[1,2],[2,3],[3,4]]
+  k_c: 1.5
+
+node_params:
+  m: [1.0, 1.2, 0.9, 1.1, 1.0]
+  d: [0.8, 0.7, 0.9, 0.75, 0.85]
+  k: [2.0, 2.2, 1.8, 2.1, 1.9]
+
+reference:
+  type: "step"
+  values: [1.0, 0.8, 1.2, 1.0, 0.9]
+  t_step: 1.0
+
+pid:
+  Kp: 6.0
+  Ki: 1.2
+  Kd: 2.0
+  I_max: 2.5
+  alpha: 0.9
+  u_sat: 20.0
+
+gnn:
+  u_max: 3.0
+  layers: 2
+  hidden: 64
+  dropout: 0.0
+  activation: "relu"
+  norm_scales:
+    e: 2.0
+    v: 2.0
+    I: 2.5
+    u_pid: 10.0
+    deg: 4.0
+
+training:
+  episodes: 100
+  T_train: 10.0
+  randomize_params: true
+  param_ranges:
+    m: [0.8, 1.2]
+    d: [0.6, 1.0]
+    k: [1.6, 2.4]
+    k_c: [1.0, 2.0]
+  loss_weights:
+    e: 2.0
+    v: 0.2
+    u: 0.01
+    du: 0.05
+    sync: 0.3
+  optimizer:
+    lr: 0.001
+    weight_decay: 0.00001
+  batch_size: 8
+  epochs: 25
+  grad_clip: 1.0
