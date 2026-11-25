@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import torch
 import os
@@ -10,9 +12,11 @@ def plot_trajectories(trajectories, title, save_path):
 
     fig, axs = plt.subplots(4, 1, figsize=(10, 12))
 
+    r = trajectories["r"].detach().cpu().numpy()
     # Positions
     for i in range(x.shape[1]):
-        axs[0].plot(t, x[:, i], label=f'Node {i}')
+        line, = axs[0].plot(t, x[:, i], label=f'Node {i}')
+        axs[0].plot(t, r[:, i], '--', color=line.get_color(), alpha=.55)
     axs[0].set_title('Positions')
     axs[0].legend()
 
@@ -39,6 +43,9 @@ def plot_trajectories(trajectories, title, save_path):
         axs[3].set_title('GNN Contributions (not available)')
         axs[3].axis('off')
 
+    for ax in axs:
+        ax.set_xlabel('Time (s)')
+        ax.grid(alpha=.2)
     plt.suptitle(title)
     plt.tight_layout()
     os.makedirs(os.path.dirname(save_path), exist_ok=True)

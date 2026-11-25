@@ -1,16 +1,20 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import MessagePassing
 
-class SimpleMPNNLayer(MessagePassing):
+
+class SimpleMPNNLayer(nn.Module):
     def __init__(self, in_channels, out_channels, edge_feat_dim=0):
-        super().__init__(aggr='add')
+        super().__init__()
         self.mlp_msg = nn.Linear(2 * in_channels + edge_feat_dim, out_channels)
         self.mlp_update = nn.Linear(in_channels + out_channels, out_channels)
 
     def forward(self, x, edge_index, edge_attr=None):
-        return self.propagate(edge_index, x=x, edge_attr=edge_attr)
+        src, dst = edge_index
+        messages = self.message(x[dst], x[src], edge_attr)
+        aggregated = x.new_zeros((x.shape[0], messages.shape[-1]))
+        aggregated.index_add_(0, dst, messages)
+        return self.update(aggregated, x)
 
     def message(self, x_i, x_j, edge_attr):
         tmp = torch.cat([x_i, x_j, edge_attr] if edge_attr is not None else [x_i, x_j], dim=-1)

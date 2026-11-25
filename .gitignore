@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+.vscode/
+models/v2*/
+outputs/legacy_recheck/
+outputs/v2*/
+
+# Local trained checkpoints (not distributed)
+models/
+*.pth
+*.pt

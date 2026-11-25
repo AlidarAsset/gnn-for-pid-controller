@@ -15,13 +15,18 @@ def generate_reference(config, t, N, device):
         step_active = 1.0 if t >= t_step else 0.0
         return step_active * r_values
     
-    # Для других типов (пока zero)
-    return torch.zeros(N, device=device)
+    if ref_type == "zero":
+        return torch.zeros(N, device=device)
+    raise ValueError(f"Unsupported reference: {ref_type}")
 
 def rollout(system, controller, config, train_mode=False, gnn=False):
     dt = config['experiment']['dt']
     T = config['training']['T_train'] if train_mode else config['experiment']['T']
-    steps = int(T / dt)
+    if dt <= 0 or T <= 0:
+        raise ValueError("dt and T must be positive")
+    steps = round(T / dt)
+    if steps < 1 or abs(steps * dt - T) > 1e-6:
+        raise ValueError("T must be an integer multiple of dt")
     N = system.N
     device = system.device
 
@@ -29,7 +34,7 @@ def rollout(system, controller, config, train_mode=False, gnn=False):
     v = torch.zeros(N, device=device)
     state = (x, v)
 
-    integrator = rk4_step if config['experiment']['integrator'] == 'rk4' else euler_step
+    integrator = {'rk4': rk4_step, 'euler': euler_step}[config['experiment']['integrator']]
 
     trajectories = {
         'x': torch.zeros(steps, N, device=device),
@@ -43,7 +48,7 @@ def rollout(system, controller, config, train_mode=False, gnn=False):
         't': torch.arange(steps, device=device) * dt,
     }
 
-    controller.reset() if not gnn else controller.pid.reset()
+    controller.reset()
 
     for step in range(steps):
         t = step * dt
@@ -53,7 +58,7 @@ def rollout(system, controller, config, train_mode=False, gnn=False):
             trajectories['u_gnn'][step] = u_gnn
         else:
             u_pid, e, I = controller.compute(x, v, r, dt)
-            u = u_pid
+            u = controller.limit(u_pid)
         trajectories['x'][step] = x
         trajectories['v'][step] = v
         trajectories['u'][step] = u

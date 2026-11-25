@@ -1,5 +1,4 @@
-torch
-torch-geometric
-matplotlib
-pyyaml
-numpy
+torch>=2.0
+matplotlib>=3.7
+PyYAML>=6.0
+numpy>=1.24
